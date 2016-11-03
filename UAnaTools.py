@@ -1,41 +1,32 @@
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
-from numpy import genfromtxt
 
 import tensorflow as tf
 
 
 def readBoolMike(filename):
-	temp0 = genfromtxt(filename,delimiter=' ')
+	temp0 = np.genfromtxt(filename,delimiter=' ')
 	temp = np.delete(temp0,0,0)
 	temparr = temp.astype(np.float32,copy=False)
 	return(temparr)
 
 def sepXY(data):
-	x_temp = np.array([i[1::] for i in data])
-	y_temp = np.array([i[0] for i in data])
-	y_temp = y_temp.reshape((len(y_temp),1))
-	return(x_temp,y_temp)
+	x_temp = data[:,1:]
+        y_temp = data[:,0]
+        return(x_temp,y_temp)
 
 def NormalizeData(data,base=True,ymin=-1,ymax=-1):
-	base_data = np.zeros(data.shape)
-	norm_data = np.zeros(data.shape)
-	for i in range(len(data)):
-		if base==True:
-			base_i = data[i,0:300].mean()
-		else:
-			base_i = 0
-		base_data[i] = data[i]-base_i
-	if ymin==-1: 
-		ymin = base_data.min()
-		print ymin
-	if ymax==-1: 
-		ymax = base_data.max()
-		print ymax
-	for i in range(len(data)):
-		norm_data[i] = (base_data[i])/(ymax-ymin)
-	return norm_data
+	if base==True:
+		sliced_data = data[:,0:300]
+        	avg_baseline = np.mean(sliced_data, axis=1)
+        	base_data = data.T-avg_baseline
+	else:
+		base_data = data.T
+	if ymin == -1: ymin = base_data.min()
+	if ymax == -1: ymax = base_data.max()
+        norm_data = base_data/(ymax-ymin)
+	return norm_data.T
 
 ##################################
 class DataSet(object):
