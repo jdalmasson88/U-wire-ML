@@ -1,15 +1,13 @@
 import numpy as np
-#import matplotlib.pyplot as plt
-
-
 import tensorflow as tf
 
 
-def readBoolMike(filename):
+def readBoolMike(filename, num_test_sample):
 	temp0 = np.genfromtxt(filename,delimiter=' ')
 	temp = np.delete(temp0,0,0)
 	temparr = temp.astype(np.float32,copy=False)
-	return(temparr)
+	sarr = np.split(temparr,[num_test_sample])
+        return(sarr[0],sarr[1])
 
 def sepXY(data):
 	x_temp = data[:,1:]

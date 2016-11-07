@@ -9,15 +9,15 @@ import UAnaTools as utls
 
 plt.ion()
 
-test_data = utls.readBoolMike('/global/cscratch1/sd/igor_ost/Mike/e1chRNWFs_19.dat')
+num_test_wfm = 5000
+ch = raw_input('select a U-wire channel:')
+
+test_data,train_data = utls.readBoolMike('/global/cscratch1/sd/jdalmass/ascii/ch'+ch+'/QRNWFs_0.dat', num_test_wfm)
+
 x_test,y_test = utls.sepXY(test_data)
 x_test_norm = utls.NormalizeData(x_test,True,-124.16,407.02)
 data_test_norm = utls.DataSet(x_test_norm,y_test)
 
-train_data = np.empty((0,1001),np.float32)
-for i in range(19):
-	train_temp = utls.readBoolMike('/global/cscratch1/sd/igor_ost/Mike/onech_dats/e1chRNWFs_'+str(i)+'.dat')
-	train_data = np.append(train_data,train_temp,axis=0)
 x_train,y_train = utls.sepXY(train_data)
 x_train_norm = utls.NormalizeData(x_train)
 data_train_norm = utls.DataSet(x_train_norm,y_train)
@@ -74,8 +74,8 @@ sess =tf.Session()
 init = tf.initialize_all_variables()
 sess.run(init)
 
-saver = tf.train.Saver()
-saver.restore(sess,"eUwire_dnn_new_v0.3")
+#saver = tf.train.Saver()
+#saver.restore(sess,"eUwire_dnn_new_v0.3")
 
 trainloss = []
 testloss = []
