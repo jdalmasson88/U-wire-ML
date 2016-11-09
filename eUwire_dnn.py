@@ -1,16 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-from numpy import genfromtxt
-
 import tensorflow as tf
-
 import UAnaTools as utls
 
 plt.ion()
 
-num_test_wfm = 5000
-ch = raw_input('select a U-wire channel:')
+num_test_wfm = 5001
+ch = str(10)
+#raw_input('select a U-wire channel:')
 
 test_data,train_data = utls.readBoolMike('/global/cscratch1/sd/jdalmass/ascii/ch'+ch+'/QRNWFs_0.dat', num_test_wfm)
 
@@ -25,7 +22,7 @@ data_train_norm = utls.DataSet(x_train_norm,y_train)
 
 ####################################################
 x = tf.placeholder(tf.float32,[None,1000])
-y_ = tf.placeholder(tf.float32,[None,1])
+y_ = tf.placeholder(tf.float32,[None])
 
 W0 = tf.get_variable("W0",shape=[1000,500],initializer=tf.contrib.layers.xavier_initializer())
 b0 = utls.bias_var([500])
@@ -81,9 +78,9 @@ trainloss = []
 testloss = []
 
 
-for i in range(10000):
+for i in range(100000):
 	batch = data_train_norm.next_batch(500)
-	if i%20 == 0:
+	if i%500 == 0:
 		ce = mse.eval(feed_dict={x:data_train_norm.images,y_:data_train_norm.labels,keep_prob:1.0},session=sess)
 		trainloss.append(ce)
 		tce = mse.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.0},session=sess)
@@ -98,9 +95,12 @@ train_smooth = utls.smooth(trainlossnp,81)
 testlossnp = np.asarray(testloss)
 test_smooth  = utls.smooth(testlossnp,81)
 
-plt.plot(trainloss)
+plt.plot(trainloss, label='train data set')
 plt.plot(train_smooth)
-plt.plot(testloss)
+plt.plot(testloss, label='test data set')
 plt.plot(test_smooth)
-
-pred = sess.run(y,feed_dict={x:data_test_norm.images,keep_prob:1.})
+plt.xlabel('batch cycle')
+plt.legend()
+plt.savefig('uwireML/learning_curve.png')
+#raw_input()
+#pred = sess.run(y,feed_dict={x:data_test_norm.images,keep_prob:1.})
