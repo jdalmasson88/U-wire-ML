@@ -23,7 +23,7 @@ def NormalizeData(data,base=True,ymin=-1,ymax=-1):
 		base_data = data.T
 	if ymin == -1: ymin = base_data.min()
 	if ymax == -1: ymax = base_data.max()
-        norm_data = base_data/(ymax-ymin)
+        norm_data = (base_data-ymin)/(ymax-ymin)
 	return norm_data.T
 
 ##################################
