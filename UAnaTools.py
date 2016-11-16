@@ -1,6 +1,17 @@
 import numpy as np
 import tensorflow as tf
 
+def readIgor(path):
+        train_arr = np.zeros([0,1001])
+        for i in xrange(19):
+                arr = np.genfromtxt(path+'onech_dats/e1chRNWFs_'+str(i)+'.dat',delimiter=' ')
+                d_arr = np.delete(arr,0,0)
+                temparr = d_arr.astype(np.float32,copy=False)
+                train_arr = np.append(train_arr,temparr,axis=0)
+        t_arr = np.genfromtxt(path+'e1chRNWFs_19.dat',delimiter=' ')
+        ttemparr = np.delete(arr,0,0)
+        test_arr = ttemparr.astype(np.float32,copy=False)
+        return (test_arr,train_arr)
 
 def readBoolMike(filename, num_test_sample):
 	temp0 = np.genfromtxt(filename,delimiter=' ')
@@ -12,9 +23,10 @@ def readBoolMike(filename, num_test_sample):
 def sepXY(data):
 	x_temp = data[:,1:]
         y_temp = data[:,0]
-        return(x_temp,y_temp)
+	r_y_temp = y_temp.reshape((len(y_temp),1))
+        return(x_temp,r_y_temp)
 
-def NormalizeData(data,base=True,ymin=-1,ymax=-1):
+def NormalizeData(data,maxmin=False,base=True,ymin=-1,ymax=-1):
 	if base==True:
 		sliced_data = data[:,0:300]
         	avg_baseline = np.mean(sliced_data, axis=1)
@@ -24,7 +36,8 @@ def NormalizeData(data,base=True,ymin=-1,ymax=-1):
 	if ymin == -1: ymin = base_data.min()
 	if ymax == -1: ymax = base_data.max()
         norm_data = (base_data-ymin)/(ymax-ymin)
-	return norm_data.T
+	if maxmin==True: return norm_data.T,ymin,ymax
+	else: return norm_data.T
 
 ##################################
 class DataSet(object):

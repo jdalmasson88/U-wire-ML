@@ -2,27 +2,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import UAnaTools as utls
+import os
 
 plt.ion()
 
-num_test_wfm = 5001
-ch = str(10)
-#raw_input('select a U-wire channel:')
 
-test_data,train_data = utls.readBoolMike('/global/cscratch1/sd/jdalmass/ascii/ch'+ch+'/QRNWFs_0.dat', num_test_wfm)
+test_data,train_data = utls.readIgor('/global/cscratch1/sd/igor_ost/Mike/')
 
-x_test,y_test = utls.sepXY(test_data)
-x_test_norm = utls.NormalizeData(x_test,True,-124.16,407.02)
-data_test_norm = utls.DataSet(x_test_norm,y_test)
+num_test_wfm = 1000
+ch = str(19)
+svfile = 'learning_curve.png'
+
+#test_data,train_data = utls.readBoolMike('/global/cscratch1/sd/jdalmass/ascii/ch'+ch+'/QRNWFs_0.dat', num_test_wfm)
 
 x_train,y_train = utls.sepXY(train_data)
-x_train_norm = utls.NormalizeData(x_train)
+x_train_norm,train_min,train_max = utls.NormalizeData(x_train,True)
 data_train_norm = utls.DataSet(x_train_norm,y_train)
 
+x_test,y_test = utls.sepXY(test_data)
+x_test_norm = utls.NormalizeData(x_test,False,True,train_min,train_max)
+data_test_norm = utls.DataSet(x_test_norm,y_test)
 
 ####################################################
 x = tf.placeholder(tf.float32,[None,1000])
-y_ = tf.placeholder(tf.float32,[None])
+y_ = tf.placeholder(tf.float32,[None,1])
 
 W0 = tf.get_variable("W0",shape=[1000,500],initializer=tf.contrib.layers.xavier_initializer())
 b0 = utls.bias_var([500])
@@ -71,16 +74,16 @@ sess =tf.Session()
 init = tf.initialize_all_variables()
 sess.run(init)
 
-#saver = tf.train.Saver()
+saver = tf.train.Saver()
 #saver.restore(sess,"eUwire_dnn_new_v0.3")
 
 trainloss = []
 testloss = []
 
 
-for i in range(100000):
+for i in range(3000):
 	batch = data_train_norm.next_batch(500)
-	if i%500 == 0:
+	if i%20 == 0:
 		ce = mse.eval(feed_dict={x:data_train_norm.images,y_:data_train_norm.labels,keep_prob:1.0},session=sess)
 		trainloss.append(ce)
 		tce = mse.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.0},session=sess)
@@ -88,19 +91,30 @@ for i in range(100000):
 		print("step %d, test mse %g"%(i,tce))
 	train_step.run(feed_dict={x:batch[0],y_:batch[1],keep_prob:0.8},session=sess)
 
-print("test accuracy %g"%mse.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.},session=sess))
+print("test accuracy %g"%mse.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.0},session=sess))
 
 trainlossnp = np.asarray(trainloss)
-train_smooth = utls.smooth(trainlossnp,81)
+#train_smooth = utls.smooth(trainlossnp,81)
 testlossnp = np.asarray(testloss)
-test_smooth  = utls.smooth(testlossnp,81)
+#test_smooth  = utls.smooth(testlossnp,81)
+pred = y.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:0.8},session=sess)
 
+plt.figure(1)
 plt.plot(trainloss, label='train data set')
-plt.plot(train_smooth)
+#plt.plot(train_smooth)
 plt.plot(testloss, label='test data set')
-plt.plot(test_smooth)
+#plt.plot(test_smooth)
 plt.xlabel('batch cycle')
+plt.yscale('log')
+plt.ylabel('MSE')
 plt.legend()
-plt.savefig('uwireML/learning_curve.png')
-#raw_input()
-#pred = sess.run(y,feed_dict={x:data_test_norm.images,keep_prob:1.})
+#if os.path.isfile(svfile): os.remove(svfile) 
+#plt.savefig('/global/homes/j/jdalmass/uwireML/'+svfile)
+
+plt.figure(2)
+plt.scatter(pred,data_test_norm.labels)
+plt.xlabel('Reconstructed Energy [keV]')
+plt.ylabel('True Energy [keV]')
+#if os.path.isfile('/global/homes/j/jdalmass/uwireML/trueVSest.png'): os.remove('/global/homes/j/jdalmass/uwireML/trueVSest.png')
+#plt.savefig('/global/homes/j/jdalmass/uwireML/trueVSest.png')
+raw_input()
