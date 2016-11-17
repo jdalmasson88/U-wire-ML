@@ -1,0 +1,10 @@
+*_10000_5000_ch2
+	1000 training examples
+	10000 epoch
+	5000 training example per batch
+
+*_10000_500_ch2
+        1000 training examples
+        10000 epoch
+        500 training example per batch
+
