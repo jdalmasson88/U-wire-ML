@@ -6,15 +6,17 @@ import os
 
 plt.ion()
 
+###### READ IGOR's DATASET ######
+#test_data,train_data = utls.readIgor('/global/cscratch1/sd/igor_ost/Mike/')
 
-test_data,train_data = utls.readIgor('/global/cscratch1/sd/igor_ost/Mike/')
-
-num_test_wfm = 1000
-ch = str(19)
+num_test_wfm = 100    ###### number of test waveforms #####
+ch = raw_input('select a channel: ')
 svfile = 'learning_curve.png'
 
-#test_data,train_data = utls.readBoolMike('/global/cscratch1/sd/jdalmass/ascii/ch'+ch+'/QRNWFs_0.dat', num_test_wfm)
+###### READ JACOPO'S DATASET ######
+test_data,train_data = utls.readBoolMike('/global/cscratch1/sd/jdalmass/ascii/ch'+ch+'/QRNWFs_0.dat', num_test_wfm)
 
+###### PREPPING THE DATA (IMAGES AND LABELS, BASELINE SUBTRACTION, NORMALIZATION) ######
 x_train,y_train = utls.sepXY(train_data)
 x_train_norm,train_min,train_max = utls.NormalizeData(x_train,True)
 data_train_norm = utls.DataSet(x_train_norm,y_train)
@@ -23,7 +25,7 @@ x_test,y_test = utls.sepXY(test_data)
 x_test_norm = utls.NormalizeData(x_test,False,True,train_min,train_max)
 data_test_norm = utls.DataSet(x_test_norm,y_test)
 
-####################################################
+###### DESIGNING THE ARCHITECTURE ######
 x = tf.placeholder(tf.float32,[None,1000])
 y_ = tf.placeholder(tf.float32,[None,1])
 
@@ -67,6 +69,7 @@ tf.nn.l2_loss(W_last)+tf.nn.l2_loss(b_last))
 
 loss = mse + regularizers*1.e-6
 
+###### OPTIMIZATION AND BACKPROPAGATION ######
 train_step = tf.train.AdamOptimizer().minimize(loss)
 
 
@@ -74,36 +77,40 @@ sess =tf.Session()
 init = tf.initialize_all_variables()
 sess.run(init)
 
+###### IF param.ckpt EXISTS, THIS STEP RESTORES THE PARAMETERS ######
 saver = tf.train.Saver()
-#saver.restore(sess,"eUwire_dnn_new_v0.3")
+saver.restore(sess,'/global/homes/j/jdalmass/uwireML/param.ckpt')  # comment these two
+print("Model restored.")                       # lines if reintializing the parameters
 
 trainloss = []
 testloss = []
 
-
-for i in range(3000):
-	batch = data_train_norm.next_batch(500)
+###### RUNNING THE TRAINING/TESTING PART ######
+for i in range(10000):
+	###### BATCHES PRODUCTION ######
+	batch = data_train_norm.next_batch(5000)
 	if i%20 == 0:
 		ce = mse.eval(feed_dict={x:data_train_norm.images,y_:data_train_norm.labels,keep_prob:1.0},session=sess)
 		trainloss.append(ce)
 		tce = mse.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.0},session=sess)
 		testloss.append(tce)
-		print("step %d, test mse %g"%(i,tce))
+		print("step %d, test MSE %g"%(i,tce))
 	train_step.run(feed_dict={x:batch[0],y_:batch[1],keep_prob:0.8},session=sess)
 
-print("test accuracy %g"%mse.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.0},session=sess))
-
 trainlossnp = np.asarray(trainloss)
-#train_smooth = utls.smooth(trainlossnp,81)
 testlossnp = np.asarray(testloss)
-#test_smooth  = utls.smooth(testlossnp,81)
-pred = y.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:0.8},session=sess)
+pred = y.eval(feed_dict={x:data_test_norm.images,y_:data_test_norm.labels,keep_prob:1.0},session=sess)
 
+print ('final plot MSE: %f'%np.mean(np.square(pred-data_test_norm.labels)))
+
+###### THIS STEP SAVES THE PARAMETERS ######
+#save_path = saver.save(sess, "/global/homes/j/jdalmass/uwireML/param.ckpt") #comment these
+#print("Model saved in file: %s" % save_path)        #two lines if restoring the parameters
+
+###### PLOTTING LEARNING CURVE AND SCATTER PLOT ######
 plt.figure(1)
 plt.plot(trainloss, label='train data set')
-#plt.plot(train_smooth)
 plt.plot(testloss, label='test data set')
-#plt.plot(test_smooth)
 plt.xlabel('batch cycle')
 plt.yscale('log')
 plt.ylabel('MSE')
