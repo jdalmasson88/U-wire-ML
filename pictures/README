@@ -1,10 +1,14 @@
 *_10000_5000_ch2
 	1000 training examples
 	10000 epoch
-	5000 training example per batch
+	5000 training examples per batch
 
 *_10000_500_ch2
         1000 training examples
         10000 epoch
-        500 training example per batch
-
+        500 training examples per batch
+igor_*1_lr-3
+	igor's dataset
+	3000 epoch
+	5000 training examples per batch
+	learning rate 0.001
