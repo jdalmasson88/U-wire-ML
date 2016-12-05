@@ -8,8 +8,9 @@ def readIgor(path):
                 d_arr = np.delete(arr,0,0)
                 temparr = d_arr.astype(np.float32,copy=False)
                 train_arr = np.append(train_arr,temparr,axis=0)
+		print ('file '+str(i)+' loaded')
         t_arr = np.genfromtxt(path+'e1chRNWFs_19.dat',delimiter=' ')
-        ttemparr = np.delete(arr,0,0)
+        ttemparr = np.delete(t_arr,0,0)
         test_arr = ttemparr.astype(np.float32,copy=False)
         return (test_arr,train_arr)
 
@@ -17,6 +18,7 @@ def readBoolMike(filename, num_test_sample):
 	temp0 = np.genfromtxt(filename,delimiter=' ')
 	temp = np.delete(temp0,0,0)
 	temparr = temp.astype(np.float32,copy=False)
+	print ('loaded')
 	sarr = np.split(temparr,[num_test_sample])
         return(sarr[0],sarr[1])
 
